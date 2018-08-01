@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashBasedTable;
@@ -30,9 +29,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 
-import boomerang.customize.BackwardEmptyCalleeFlow;
-import boomerang.customize.EmptyCalleeFlow;
-import boomerang.customize.ForwardEmptyCalleeFlow;
 import boomerang.debugger.Debugger;
 import boomerang.jimple.AllocVal;
 import boomerang.jimple.Field;
@@ -43,7 +39,6 @@ import boomerang.poi.AbstractPOI;
 import boomerang.poi.ExecuteImportCallStmtPOI;
 import boomerang.poi.ExecuteImportFieldStmtPOI;
 import boomerang.poi.PointOfIndirection;
-import boomerang.preanalysis.PreTransformBodies;
 import boomerang.results.BackwardBoomerangResults;
 import boomerang.results.ForwardBoomerangResults;
 import boomerang.seedfactory.SeedFactory;
@@ -55,12 +50,10 @@ import boomerang.solver.ReachableMethodListener;
 import boomerang.stats.IBoomerangStats;
 import heros.utilities.DefaultValueMap;
 import soot.Local;
-import soot.PackManager;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
-import soot.Transform;
 import soot.Unit;
 import soot.jimple.ArrayRef;
 import soot.jimple.AssignStmt;
@@ -224,8 +217,6 @@ public abstract class WeightedBoomerang<W extends Weight> {
 
 
 	private BackwardsInterproceduralCFG bwicfg;
-	private EmptyCalleeFlow forwardEmptyCalleeFlow = new ForwardEmptyCalleeFlow();
-	private EmptyCalleeFlow backwardEmptyCalleeFlow = new BackwardEmptyCalleeFlow();
 	
 	private NestedWeightedPAutomatons<Statement, INode<Val>, W> backwardCallSummaries = new SummaryNestedWeightedPAutomatons<>();
 	private NestedWeightedPAutomatons<Field, INode<Node<Statement, Val>>, W> backwardFieldSummaries = new SummaryNestedWeightedPAutomatons<>();
@@ -286,7 +277,7 @@ public abstract class WeightedBoomerang<W extends Weight> {
 			@Override
 			protected Collection<? extends State> getEmptyCalleeFlow(SootMethod caller, Stmt callSite, Val value,
 					Stmt returnSite) {
-				return backwardEmptyCalleeFlow.getEmptyCalleeFlow(caller, callSite, value, returnSite);
+				return options.getBackwardEmptyCalleeFlow().getEmptyCalleeFlow(caller, callSite, value, returnSite);
 			}
 
 			@Override
@@ -412,7 +403,7 @@ public abstract class WeightedBoomerang<W extends Weight> {
 			@Override
 			protected Collection<? extends State> getEmptyCalleeFlow(SootMethod caller, Stmt callSite, Val value,
 					Stmt returnSite) {
-				return forwardEmptyCalleeFlow.getEmptyCalleeFlow(caller, callSite, value, returnSite);
+				return options.getForwardEmptyCalleeFlow().getEmptyCalleeFlow(caller, callSite, value, returnSite);
 			}
 
 			@Override

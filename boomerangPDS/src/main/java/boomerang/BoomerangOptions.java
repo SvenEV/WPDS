@@ -13,6 +13,7 @@ package boomerang;
 
 import com.google.common.base.Optional;
 
+import boomerang.customize.EmptyCalleeFlow;
 import boomerang.jimple.AllocVal;
 import boomerang.jimple.Val;
 import boomerang.stats.IBoomerangStats;
@@ -45,5 +46,9 @@ public interface BoomerangOptions {
 	public IBoomerangStats statsFactory();
 
 	public boolean aliasing();
+
+	public EmptyCalleeFlow getForwardEmptyCalleeFlow();
+
+	public EmptyCalleeFlow getBackwardEmptyCalleeFlow();
 	
 }

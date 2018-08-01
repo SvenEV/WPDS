@@ -11,8 +11,12 @@
  *******************************************************************************/
 package boomerang;
 
+
 import com.google.common.base.Optional;
 
+import boomerang.customize.BackwardEmptyCalleeFlow;
+import boomerang.customize.EmptyCalleeFlow;
+import boomerang.customize.ForwardEmptyCalleeFlow;
 import boomerang.jimple.AllocVal;
 import boomerang.jimple.Statement;
 import boomerang.jimple.Val;
@@ -35,6 +39,9 @@ import soot.jimple.StringConstant;
 import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 
 public class DefaultBoomerangOptions implements BoomerangOptions {
+
+	private EmptyCalleeFlow forwardEmptyCalleeFlow = new ForwardEmptyCalleeFlow();
+	private EmptyCalleeFlow backwardEmptyCalleeFlow = new BackwardEmptyCalleeFlow();
 	
 	public boolean isAllocationVal(Value val) {
 		if (!trackStrings() && isStringAllocationType(val.getType())) {
@@ -171,6 +178,16 @@ public class DefaultBoomerangOptions implements BoomerangOptions {
 	@Override
 	public boolean aliasing() {
 		return true;
+	}
+
+	@Override
+	public EmptyCalleeFlow getForwardEmptyCalleeFlow() {
+		return forwardEmptyCalleeFlow;
+	}
+
+	@Override
+	public EmptyCalleeFlow getBackwardEmptyCalleeFlow() {
+		return backwardEmptyCalleeFlow;
 	}
 
 }
