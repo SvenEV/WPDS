@@ -13,6 +13,7 @@ package boomerang.customize;
 
 import boomerang.jimple.Statement;
 import boomerang.jimple.Val;
+import com.google.common.collect.Sets;
 import soot.SootMethod;
 import soot.Value;
 import soot.jimple.Stmt;
@@ -21,6 +22,7 @@ import wpds.interfaces.State;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 public class ForwardEmptyCalleeFlow extends EmptyCalleeFlow {
 
@@ -37,8 +39,7 @@ public class ForwardEmptyCalleeFlow extends EmptyCalleeFlow {
 
 	@Override
 	protected Collection<? extends State> calleesExcludedFlow(SootMethod caller, Stmt callSite, Val value, Stmt returnSite) {
-		Val sameValAfterCall = new Val(value.value(), caller);
-		return Collections.singleton(new Node<Statement, Val>(new Statement(returnSite, caller), sameValAfterCall));
+		return Collections.singleton(new Node<>(new Statement(returnSite, caller), value));
 	}
 
 }

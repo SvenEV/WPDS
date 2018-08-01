@@ -36,7 +36,6 @@ public class BackwardEmptyCalleeFlow extends EmptyCalleeFlow {
 
 	@Override
 	protected Collection<? extends State> calleesExcludedFlow(SootMethod caller, Stmt callSite, Val value, Stmt returnSite) {
-		Val sameValAfterCall = new Val(value.value(), caller);
-		return Collections.singleton(new Node<Statement, Val>(new Statement(returnSite, caller), sameValAfterCall));
+		return Collections.singleton(new Node<>(new Statement(returnSite, caller), value));
 	}
 }
