@@ -31,11 +31,6 @@ public abstract class EmptyCalleeFlow {
 		return systemArrayCopyMethod != null && systemArrayCopyMethod.equals(method);
 	}
 
-	protected boolean isMethodBodyExcluded(SootMethod method) {
-		SootClass declaringClass = method.getDeclaringClass();
-		return Scene.v().isExcluded(declaringClass);
-	}
-
 	protected void fetchSystemArrayClasses() {
 		if(fetchedSystemArrayCopyMethod)
 			return;
@@ -55,15 +50,9 @@ public abstract class EmptyCalleeFlow {
 		if(isSystemArrayCopy(callSite.getInvokeExpr().getMethod())){
 			return systemArrayCopyFlow(caller, callSite, value, returnSite);
 		}
-		if (isMethodBodyExcluded(callSite.getInvokeExpr().getMethod())){
-			return calleesExcludedFlow(caller, callSite, value, returnSite);
-		}
 		return Collections.emptySet();
 	}
 
 	protected abstract Collection<? extends State> systemArrayCopyFlow(SootMethod caller, Stmt callSite, Val value,
 			Stmt returnSite);
-
-	protected abstract Collection<? extends State> calleesExcludedFlow(SootMethod caller, Stmt callSite, Val value,
-																	   Stmt returnSite);
 }
