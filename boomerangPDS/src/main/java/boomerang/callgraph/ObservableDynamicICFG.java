@@ -138,10 +138,7 @@ public class ObservableDynamicICFG<W extends Weight> implements ObservableICFG<U
 
     @Override
     public void addCalleeListener(CalleeListener<Unit, SootMethod> listener) {
-        if (!calleeListeners.add(listener)){
-            //This listener was already present, do not notify it again
-            return;
-        }
+        calleeListeners.add(listener);
 
         //Notify the new listener about edges we already know
         Unit unit = listener.getObservedCaller();
@@ -223,17 +220,17 @@ public class ObservableDynamicICFG<W extends Weight> implements ObservableICFG<U
 
     @Override
     public void addCallerListener(CallerListener<Unit, SootMethod> listener) {
-        if (callerListeners.add(listener)){
-            SootMethod method = listener.getObservedCallee();
+        callerListeners.add(listener);
 
-            logger.debug("Queried for callers of {}.", method);
+        SootMethod method = listener.getObservedCallee();
 
-            //Notify the new listener about what we already now
-            Iterator<Edge> edgeIterator = demandDrivenCallGraph.edgesInto(method);
-            while (edgeIterator.hasNext()){
-                Edge edge = edgeIterator.next();
-                listener.onCallerAdded(edge.srcUnit(), method);
-            }
+        logger.debug("Queried for callers of {}.", method);
+
+        //Notify the new listener about what we already now
+        Iterator<Edge> edgeIterator = demandDrivenCallGraph.edgesInto(method);
+        while (edgeIterator.hasNext()){
+            Edge edge = edgeIterator.next();
+            listener.onCallerAdded(edge.srcUnit(), method);
         }
     }
 
