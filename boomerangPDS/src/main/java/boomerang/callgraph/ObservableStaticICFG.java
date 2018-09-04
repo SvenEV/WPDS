@@ -147,13 +147,8 @@ public class ObservableStaticICFG implements ObservableICFG<Unit, SootMethod>{
     }
 
 	@Override
-	public boolean isMethodsWithCallFlow(SootMethod method) {
-		return true;
-	}
-
-	@Override
-	public void addMethodWithCallFlow(SootMethod method) {
-        //No need to keep track of that since we rely on the precomputed graph
+	public boolean hasUnbalancedReturnFlow(SootMethod method) {
+		return false;
 	}
 
     /**

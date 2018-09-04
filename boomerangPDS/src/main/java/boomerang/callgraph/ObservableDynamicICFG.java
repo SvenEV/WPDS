@@ -9,7 +9,6 @@ import boomerang.results.BackwardBoomerangResults;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import heros.DontSynchronize;
 import heros.SynchronizedBy;
 import heros.solver.IDESolver;
@@ -48,7 +47,7 @@ public class ObservableDynamicICFG<W extends Weight> implements ObservableICFG<U
     private CallGraph demandDrivenCallGraph = new CallGraph();
     private CallGraph precomputedCallGraph;
     private WeightedBoomerang<W> solver;
-    private Set<SootMethod> methodsWithCallFlow = Sets.newHashSet();
+    private Set<SootMethod> unbalancedReturnFlows = new HashSet<>();
 
     private HashSet<CalleeListener<Unit, SootMethod>> calleeListeners = new HashSet<>();
     private HashSet<CallerListener<Unit, SootMethod>> callerListeners = new HashSet<>();
@@ -265,11 +264,13 @@ public class ObservableDynamicICFG<W extends Weight> implements ObservableICFG<U
     @Override
     public Collection<Unit> getAllPrecomputedCallers(SootMethod sootMethod) {
         logger.debug("Getting precomputed callers of {}", sootMethod);
+        unbalancedReturnFlows.remove(sootMethod);
         Set<Unit> callers = new HashSet<>();
         Iterator<Edge> precomputedCallers = precomputedCallGraph.edgesInto(sootMethod);
         while (precomputedCallers.hasNext()){
             Edge methodCall = precomputedCallers.next();
             callers.add(methodCall.srcUnit());
+            unbalancedReturnFlows.add(methodCall.src());
             boolean wasPrecomputedAdded = addCallIfNotInGraph(methodCall.srcUnit(), methodCall.tgt(), methodCall.kind());
             if (wasPrecomputedAdded)
                 numberOfEdgesTakenFromPrecomputedCallGraph++;
@@ -288,6 +289,13 @@ public class ObservableDynamicICFG<W extends Weight> implements ObservableICFG<U
         logger.debug("Added call from unit '{}' to method '{}'", caller, callee);
         Edge edge = new Edge(getMethodOf(caller), caller, callee, kind);
         demandDrivenCallGraph.addEdge(edge);
+
+        //Find out whether the caller might have unbalanced return flow. That's the case if the method is only a caller
+        SootMethod callerMethod = getMethodOf(caller);
+        if (!demandDrivenCallGraph.edgesInto(callerMethod).hasNext()){
+            unbalancedReturnFlows.add(callerMethod);
+        }
+
         //Notify all interested listeners, so ..
         //.. CalleeListeners interested in callees of the caller or the CallGraphExtractor that is interested in any
         for (CalleeListener<Unit, SootMethod> listener : Lists.newArrayList(calleeListeners)){
@@ -404,13 +412,10 @@ public class ObservableDynamicICFG<W extends Weight> implements ObservableICFG<U
     }
 
 	@Override
-	public boolean isMethodsWithCallFlow(SootMethod method) {
-		return methodsWithCallFlow.contains(method);
+	public boolean hasUnbalancedReturnFlow(SootMethod method) {
+		return unbalancedReturnFlows.contains(method);
 	}
 
-	public void addMethodWithCallFlow(SootMethod method) {
-        methodsWithCallFlow.add(method);
-    }
 
     @Override
     public int getNumberOfEdgesTakenFromPrecomputedGraph() {

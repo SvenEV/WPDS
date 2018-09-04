@@ -102,13 +102,8 @@ public class BackwardsObservableICFG implements ObservableICFG<Unit, SootMethod>
     }
 
     @Override
-	public boolean isMethodsWithCallFlow(SootMethod method) {
-		return delegate.isMethodsWithCallFlow(method);
-	}
-
-	@Override
-	public void addMethodWithCallFlow(SootMethod method) {
-		delegate.addMethodWithCallFlow(method);
+	public boolean hasUnbalancedReturnFlow(SootMethod method) {
+		return delegate.hasUnbalancedReturnFlow(method);
 	}
 
     @Override
