@@ -9,6 +9,11 @@ pipeline {
             steps {
                 sh 'mvn -Dmaven.test.failure.ignore=true -B verify'
             }
+            post {
+                success {
+                    junit 'shippable/testresults/**/*.xml'
+                }
+            }
         }
     }
 }
