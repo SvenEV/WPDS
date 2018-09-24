@@ -7,13 +7,23 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'mvn -Dmaven.test.failure.ignore=true -B verify'
+                githubNotify description: 'Build is running',  status: 'PENDING'
+                sh 'mvn --fail-at-end -B verify'
             }
-            post {
-                success {
-                    junit 'shippable/testresults/**/*.xml'
-                }
-            }
+        }
+    }
+    post {
+        success {
+            githubNotify description: 'Build succeeded.',  status: 'SUCCESS'
+            junit 'shippable/testresults/**/*.xml'
+        }
+        unstable {
+            githubNotify description: 'Build contains test failures.',  status: 'ERROR'
+            junit 'shippable/testresults/**/*.xml'
+        }
+        failure {
+            githubNotify description: 'Build failed',  status: 'FAILURE'
+            junit 'shippable/testresults/**/*.xml'
         }
     }
 }
