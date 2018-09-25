@@ -14,15 +14,15 @@ pipeline {
     }
     post {
         success {
-            githubNotify description: 'Build succeeded.',  status: 'SUCCESS'
+            githubNotify description: 'Build succeeded.', credentialsId: 'soot-ci', status: 'SUCCESS'
             junit 'shippable/testresults/**/*.xml'
         }
         unstable {
-            githubNotify description: 'Build contains test failures.',  status: 'ERROR'
+            githubNotify description: 'Build contains test failures.', credentialsId: 'soot-ci', status: 'ERROR'
             junit 'shippable/testresults/**/*.xml'
         }
         failure {
-            githubNotify description: 'Build failed',  status: 'FAILURE'
+            githubNotify description: 'Build failed', credentialsId: 'soot-ci', status: 'FAILURE'
             junit 'shippable/testresults/**/*.xml'
         }
     }
