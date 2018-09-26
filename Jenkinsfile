@@ -14,15 +14,15 @@ pipeline {
     }
     post {
         success {
-            githubNotify description: 'Build succeeded.', credentialsId: 'soot-ci', status: 'SUCCESS'
+            githubNotify description: 'Build succeeded.', credentialsId: '36ca1390-b7f8-4283-b8fe-85b2ab5f989a', status: 'SUCCESS'
             junit 'shippable/testresults/**/*.xml'
         }
         unstable {
-            githubNotify description: 'Build contains test failures.', credentialsId: 'soot-ci', status: 'ERROR'
+            githubNotify description: 'Build contains test failures.', credentialsId: '36ca1390-b7f8-4283-b8fe-85b2ab5f989a', status: 'ERROR'
             junit 'shippable/testresults/**/*.xml'
         }
         failure {
-            githubNotify description: 'Build failed', credentialsId: 'soot-ci', status: 'FAILURE'
+            githubNotify description: 'Build failed', credentialsId: '36ca1390-b7f8-4283-b8fe-85b2ab5f989a', status: 'FAILURE'
             junit 'shippable/testresults/**/*.xml'
         }
     }
