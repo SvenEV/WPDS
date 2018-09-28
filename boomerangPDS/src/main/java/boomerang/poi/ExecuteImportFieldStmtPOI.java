@@ -164,11 +164,11 @@ public abstract class ExecuteImportFieldStmtPOI<W extends Weight> {
 	
 	private class CallSiteListener implements WPAUpdateListener<Statement, INode<Val>, W> {
 
-		private AbstractBoomerangSolver<W> baseSolver;
+		private AbstractBoomerangSolver<W> flowSolver;
 		private Statement callSite;
 
-		public CallSiteListener(AbstractBoomerangSolver<W> baseSolver, Statement callSite) {
-			this.baseSolver = baseSolver;
+		public CallSiteListener(AbstractBoomerangSolver<W> flowSolver, Statement callSite) {
+			this.flowSolver = flowSolver;
 			this.callSite = callSite;
 		}
 
@@ -224,9 +224,9 @@ public abstract class ExecuteImportFieldStmtPOI<W extends Weight> {
 			} else if (!callSite.equals(other.callSite))
 				return false;
 			if (baseSolver == null) {
-				if (other.baseSolver != null)
+				if (other.flowSolver != null)
 					return false;
-			} else if (!baseSolver.equals(other.baseSolver))
+			} else if (!flowSolver.equals(other.flowSolver))
 				return false;
 			return true;
 		}
@@ -327,7 +327,7 @@ public abstract class ExecuteImportFieldStmtPOI<W extends Weight> {
 		baseSolver.registerStatementFieldTransitionListener(
 				new ImportIndirectAliases(succ, this.flowSolver, this.baseSolver));
 		flowSolver.registerStatementCallTransitionListener(new ImportIndirectCallAliases(curr, this.flowSolver));
-		flowSolver.getCallAutomaton().registerListener( new CallStackListener(flowSolver.getCallAutomaton(),new SingleNode<Val>(storedVar),curr,this));
+		baseSolver.getCallAutomaton().registerListener( new CallStackListener(baseSolver.getCallAutomaton(),new SingleNode<Val>(baseVar),curr,this));
 	}
 
 	private class CallStackListener extends StackListener<Statement, INode<Val>, W>{
@@ -342,14 +342,13 @@ public abstract class ExecuteImportFieldStmtPOI<W extends Weight> {
 
 		@Override
 		public void stackElement(Statement child, Statement parent) {
-			for(Statement cs : flowSolver.getPredsOf(parent)) {
-				flowSolver.getCallAutomaton().registerListener(new CallSiteListener(baseSolver, cs));
+			for(Statement cs : baseSolver.getPredsOf(parent)) {
+				baseSolver.getCallAutomaton().registerListener(new CallSiteListener(flowSolver, cs));
 			}
 		}
 
 		@Override
 		public void anyContext(Statement end) {
-			System.out.println("ANY CONTEXXt"  +end);
 		}
 
 		@Override
