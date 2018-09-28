@@ -68,7 +68,7 @@ public abstract class StackListener<N extends Location, D extends State, W exten
 		@Override
 		public void onOutTransitionAdded(Transition<N, D> t, W w, WeightedPAutomaton<N, D, W> weightedPAutomaton) {
 			stackElement(source, t.getLabel());
-			if(aut.isGeneratedState(t.getTarget())) {
+			if(aut.isGeneratedState(t.getTarget()) || aut.isUnbalancedState(t.getTarget())) {
 				aut.registerListener(new SubStackListener(t.getTarget(),t.getLabel(),parent) {
 					@Override
 					public void stackElement(N child, N parent) {

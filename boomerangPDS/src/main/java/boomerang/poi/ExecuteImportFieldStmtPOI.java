@@ -13,6 +13,7 @@ import sync.pds.solver.nodes.GeneratedState;
 import sync.pds.solver.nodes.INode;
 import sync.pds.solver.nodes.Node;
 import sync.pds.solver.nodes.SingleNode;
+import wpds.impl.StackListener;
 import wpds.impl.Transition;
 import wpds.impl.Weight;
 import wpds.impl.WeightedPAutomaton;
@@ -104,8 +105,8 @@ public abstract class ExecuteImportFieldStmtPOI<W extends Weight> {
 			}
 			boolean predIsCallStmt = false;
 			for (Statement s : flowSolver.getPredsOf(returnSiteOrExitStmt)) {
-				predIsCallStmt |= s.isCallsite()
-						&& flowSolver.valueUsedInStatement(s.getUnit().get(), t.getStart().fact());
+//				predIsCallStmt |= s.isCallsite()
+//						&& flowSolver.valueUsedInStatement(s.getUnit().get(), t.getStart().fact());
 			}
 
 			if (predIsCallStmt) {
@@ -151,6 +152,77 @@ public abstract class ExecuteImportFieldStmtPOI<W extends Weight> {
 			if (getClass() != obj.getClass())
 				return false;
 			ForAnyCallSiteOrExitStmt other = (ForAnyCallSiteOrExitStmt) obj;
+			if (baseSolver == null) {
+				if (other.baseSolver != null)
+					return false;
+			} else if (!baseSolver.equals(other.baseSolver))
+				return false;
+			return true;
+		}
+
+	}
+	
+	private class CallSiteListener implements WPAUpdateListener<Statement, INode<Val>, W> {
+
+		private AbstractBoomerangSolver<W> baseSolver;
+		private Statement callSite;
+
+		public CallSiteListener(AbstractBoomerangSolver<W> baseSolver, Statement callSite) {
+			this.baseSolver = baseSolver;
+			this.callSite = callSite;
+		}
+
+		@Override
+		public void onWeightAdded(Transition<Statement, INode<Val>> t, W w,
+				WeightedPAutomaton<Statement, INode<Val>, W> aut) {
+			if (t.getStart() instanceof GeneratedState)
+				return;
+			if(!t.getLabel().equals(callSite)) {
+				return;
+			}
+			importSolvers(t.getTarget(), w);
+		}
+
+		
+		private void importSolvers(INode<Val> node, W w) {
+			baseSolver.registerStatementCallTransitionListener(
+					new ImportTransitionFromCall(flowSolver, callSite, node, w));
+			baseSolver.registerListener(new SyncPDSUpdateListener<Statement, Val>() {
+				
+				@Override
+				public void onReachableNodeAdded(Node<Statement, Val> reachableNode) {
+					if(reachableNode.stmt().equals(callSite)) {
+						baseSolver.registerStatementFieldTransitionListener(
+								new CallSiteOrExitStmtImport(flowSolver, baseSolver, reachableNode));
+					}
+					
+				}
+			});
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((baseSolver == null) ? 0 : baseSolver.hashCode());
+			result = prime * result + ((callSite == null) ? 0 : callSite.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			CallSiteListener other = (CallSiteListener) obj;
+			if (callSite == null) {
+				if (other.callSite != null)
+					return false;
+			} else if (!callSite.equals(other.callSite))
+				return false;
 			if (baseSolver == null) {
 				if (other.baseSolver != null)
 					return false;
@@ -255,8 +327,64 @@ public abstract class ExecuteImportFieldStmtPOI<W extends Weight> {
 		baseSolver.registerStatementFieldTransitionListener(
 				new ImportIndirectAliases(succ, this.flowSolver, this.baseSolver));
 		flowSolver.registerStatementCallTransitionListener(new ImportIndirectCallAliases(curr, this.flowSolver));
+		flowSolver.getCallAutomaton().registerListener( new CallStackListener(flowSolver.getCallAutomaton(),new SingleNode<Val>(storedVar),curr,this));
 	}
 
+	private class CallStackListener extends StackListener<Statement, INode<Val>, W>{
+
+		private ExecuteImportFieldStmtPOI<W> poi;
+
+		public CallStackListener(WeightedPAutomaton<Statement, INode<Val>, W> weightedPAutomaton, INode<Val> state,
+				Statement source, ExecuteImportFieldStmtPOI<W> poi) {
+			super(weightedPAutomaton, state, source);
+			this.poi = poi;
+		}
+
+		@Override
+		public void stackElement(Statement child, Statement parent) {
+			for(Statement cs : flowSolver.getPredsOf(parent)) {
+				flowSolver.getCallAutomaton().registerListener(new CallSiteListener(baseSolver, cs));
+			}
+		}
+
+		@Override
+		public void anyContext(Statement end) {
+			System.out.println("ANY CONTEXXt"  +end);
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = super.hashCode();
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + ((poi == null) ? 0 : poi.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (!super.equals(obj))
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			CallStackListener other = (CallStackListener) obj;
+			if (!getOuterType().equals(other.getOuterType()))
+				return false;
+			if (poi == null) {
+				if (other.poi != null)
+					return false;
+			} else if (!poi.equals(other.poi))
+				return false;
+			return true;
+		}
+
+		private ExecuteImportFieldStmtPOI getOuterType() {
+			return ExecuteImportFieldStmtPOI.this;
+		}
+		
+	}
 	private void handlingAtCallSites() {
 		flowSolver.getCallAutomaton().registerListener(new ForAnyCallSiteOrExitStmt(this.baseSolver));
 	}
