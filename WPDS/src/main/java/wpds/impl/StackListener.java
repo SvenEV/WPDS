@@ -32,7 +32,7 @@ public abstract class StackListener<N extends Location, D extends State, W exten
 	@Override
 	public void onInTransitionAdded(Transition<N, D> t, W w, WeightedPAutomaton<N, D, W> weightedPAutomaton) {
 	}
-	public abstract void stackElement(N child, N parent);
+	public abstract void stackElement(N calleeCallSite, N callerCallSite);
 	public abstract void anyContext(N end);
 	@Override
 	public int hashCode() {
